@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>编辑并显示嵌入的脚本</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      line-height: 1.6;
+      margin: 20px;
+    }
+    pre {
+      background: #f9f9f9;
+      border: 1px solid #ccc;
+      padding: 10px;
+      white-space: pre-wrap; /* 自动换行 */
+      overflow-x: auto;
+    }
+    input[type="text"] {
+      width: 100%;
+      padding: 10px;
+      margin: 10px 0;
+      font-size: 14px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+  </style>
+</head>
+<body>
+  <h1>动态加载和编辑脚本</h1>
+  <p>请输入新的 PUBLIC_KEY：</p>
+  <input type="text" id="publicKeyInput" placeholder="请输入公钥内容" value="ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQDSBxwIchWNQb2rhtE8VNm9Vd1RFvHaG5rBdgVh+5FyfCm0WABa0Q2dYfcL9ICqxwXwUeX3AQzLTI8u/8WSxOr83ZCXKy2kaxsllPOHmriAOGQtxuShioU+oKgw1rETtXlioYfUWQvZETOoEpdqrswtvSwe7PAk0wy8Dsi98CWR/KdGT5E6h7k8rGvtZexJRE80SpQARtcd5yYFKJwy5R3PkG0ARQvhFVBXvyYYmf/9h+g9/HDd2YZADcT60Fx61KCboWXGUWVQpUKLzaLDLIgrF15Vzls18xB4iCbI9jp33uQDxkOorM03OT7zWiuikWVfy1NPEpXwhR+mGuoTkDh7S1S063AbUjscSraA+jS/esk9zWP70sGIfRitEgrZn/BBWkuC60sgUcw3YJhmwDixQJM/0BF9Yp8FK8/zgmye5XsXneYFwG0skG9IHDu0mvHctKlEJb3nfVDQYl3aFy22tw3SA6K4dFeoUCtD3vvnZEVfp7AzSV+PJAKYWNOBhVU= chenyingjie@baiccl.com">
+  <p>以下是嵌入的脚本内容：</p>
+  <pre id="scriptContent">正在加载脚本内容...</pre>
+  <p>如果需要下载脚本，请点击下面的链接：</p>
+  <a id="downloadLink" download="script.sh">下载脚本</a>
+
+  <script>
+    // 获取输入框和显示区域的引用
+    var publicKeyInput = document.getElementById('publicKeyInput');
+    var scriptContentElement = document.getElementById('scriptContent');
+    var downloadLink = document.getElementById('downloadLink');
+
+    // 定义函数以生成脚本
+    function generateScript(publicKey) {
+      return `#!/bin/bash
+
+# 指定公钥内容
+PUBLIC_KEY="${publicKey}"
+
+# 检查并创建 .ssh 目录
+SSH_DIR="$HOME/.ssh"
+if [ ! -d "$SSH_DIR" ]; then
+    echo "创建 .ssh 目录..."
+    mkdir -p "$SSH_DIR"
+    chmod 700 "$SSH_DIR"
+fi
+
+# 检查 authorized_keys 文件是否存在
+AUTHORIZED_KEYS="$SSH_DIR/authorized_keys"
+if [ ! -f "$AUTHORIZED_KEYS" ]; then
+    echo "创建 authorized_keys 文件..."
+    touch "$AUTHORIZED_KEYS"
+    chmod 600 "$AUTHORIZED_KEYS"
+fi
+
+# 检查公钥是否已存在
+if grep -qF "$PUBLIC_KEY" "$AUTHORIZED_KEYS"; then
+    echo "公钥已存在于 authorized_keys 文件中。"
+else
+    echo "添加公钥到 authorized_keys..."
+    echo "$PUBLIC_KEY" >> "$AUTHORIZED_KEYS"
+    chmod 600 "$AUTHORIZED_KEYS"
+    echo "公钥添加成功！"
+fi
+`;
+    }
+
+    // 更新脚本内容和下载链接
+    function updateScript() {
+      var publicKey = publicKeyInput.value;
+      var bashScript = generateScript(publicKey);
+
+      // 显示脚本内容
+      scriptContentElement.textContent = bashScript;
+
+      // 设置下载链接的内容
+      var blob = new Blob([bashScript], { type: 'text/plain' });
+      downloadLink.href = URL.createObjectURL(blob);
+    }
+
+    // 初始加载
+    document.addEventListener('DOMContentLoaded', updateScript);
+
+    // 添加输入框变化监听
+    publicKeyInput.addEventListener('input', updateScript);
+  </script>
+</body>
+</html>
